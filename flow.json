@@ -1,0 +1,16 @@
+{
+  name AI Shorts Factory Flow,
+  nodes [
+    {
+      id 1,
+      type telegramTrigger,
+      command shorts,
+      next downloadVideo
+    },
+    {
+      id 2,
+      type downloadVideo,
+      action yt-dlp
+    }
+  ]
+}
