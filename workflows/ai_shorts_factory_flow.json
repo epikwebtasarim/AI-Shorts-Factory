@@ -1,3 +1,68 @@
 {
-  "info": "AI Shorts Factory automation flow placeholder"
+  "name": "AI Shorts Factory Flow",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "telegramTrigger",
+      "position": [200, 200],
+      "parameters": {
+        "updates": [{ "command": "/shorts" }]
+      },
+      "name": "Telegram Trigger"
+    },
+    {
+      "id": "2",
+      "type": "httpRequest",
+      "position": [400, 200],
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/search",
+        "method": "GET",
+        "queryParameters": [
+          { "name": "part", "value": "snippet" },
+          { "name": "maxResults", "value": "1" },
+          { "name": "order", "value": "viewCount" },
+          { "name": "q", "value": "komik anlar" },
+          { "name": "type", "value": "video" },
+          { "name": "key", "value": "={{$env.YOUTUBE_KEY}}" }
+        ]
+      },
+      "name": "YouTube Search"
+    },
+    {
+      "id": "3",
+      "type": "code",
+      "position": [650, 200],
+      "name": "Extract Video URL",
+      "parameters": {
+        "language": "JavaScript",
+        "code": "const item = items[0].json.items[0];\nreturn [{ json: { url: `https://www.youtube.com/watch?v=${item.id.videoId}` } }];"
+      }
+    },
+    {
+      "id": "4",
+      "type": "executeCommand",
+      "position": [900, 200],
+      "parameters": {
+        "command": "yt-dlp -f mp4 -o video.mp4 {{$json[\"url\"]}} && ffmpeg -i video.mp4 -vf \"scale=1080:1920,setsar=1\" -t 00:00:30 output.mp4"
+      },
+      "name": "Download & Cut Video"
+    },
+    {
+      "id": "5",
+      "type": "telegram",
+      "position": [1150, 200],
+      "parameters": {
+        "chatId": "={{$json.chatId}}",
+        "text": "✅ Shorts oluşturuldu ve kaydedildi!",
+        "additionalFields": {}
+      },
+      "name": "Send Telegram Message"
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": { "main": [[{ "node": "YouTube Search", "type": "main", "index": 0 }]] },
+    "YouTube Search": { "main": [[{ "node": "Extract Video URL", "type": "main", "index": 0 }]] },
+    "Extract Video URL": { "main": [[{ "node": "Download & Cut Video", "type": "main", "index": 0 }]] },
+    "Download & Cut Video": { "main": [[{ "node": "Send Telegram Message", "type": "main", "index": 0 }]] }
+  }
 }
